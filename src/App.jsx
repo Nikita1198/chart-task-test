@@ -112,12 +112,12 @@ const getWordLines = (text) => {
   words.forEach((word) => {
     if (word.length > maxCharInLine) {
       if (currentLine) {
-        wordLines.push(currentLine); 
-        currentLine = ''; 
+        wordLines.push(currentLine);
+        currentLine = '';
       }
       while (word.length > 0) {
-        wordLines.push(word.substring(0, maxCharInLine)); 
-        word = word.substring(maxCharInLine); 
+        wordLines.push(word.substring(0, maxCharInLine));
+        word = word.substring(maxCharInLine);
       }
     } else {
       if ((currentLine + ' ' + word).trim().length > maxCharInLine) {
@@ -132,10 +132,10 @@ const getWordLines = (text) => {
   });
 
   if (currentLine) {
-    wordLines.push(currentLine); 
+    wordLines.push(currentLine);
   }
 
-  return wordLines.filter(line => line); 
+  return wordLines.filter(line => line);
 };
 
 const createPath = (start, end, controlPointFactor = 0.5) => {
@@ -179,10 +179,10 @@ const App = () => {
     }
   }, [selected, selectedSkill]);
 
-  const radius = 130;
-  const radiusSkills = 350;
-  const textRadius = radius + 90; 
-  const textRadiusSkills = radiusSkills + 80; 
+  const radius = 128;
+  const radiusSkills = 330;
+  const textRadius = radius + 60;
+  const textRadiusSkills = radiusSkills + 40;
   const center = { x: 450, y: 450 };
   const strokeWidth = 2;
   const padding = 10;
@@ -191,10 +191,10 @@ const App = () => {
     // Определение выбранной профессии
     const selectedProfessionIndex = initialData.findIndex(p => p.name === name);
     const selectedProfession = initialData[selectedProfessionIndex];
-  
+
     // Вычисление угла для выбранной профессии
     const selectedProfessionAngle = (selectedProfessionIndex / initialData.length) * (2 * Math.PI);
-  
+
     // Функция для вычисления углового расстояния до выбранной профессии
     const calculateAngleDistance = (skillIndex) => {
       const skillAngle = (skillIndex / uniqueSkillsArray.length) * (2 * Math.PI);
@@ -203,25 +203,25 @@ const App = () => {
       angleDistance = angleDistance > Math.PI ? (2 * Math.PI) - angleDistance : angleDistance;
       return angleDistance;
     };
-  
+
     // Выбор ближайших навыков по угловому расстоянию
     // Сначала создаем пары [index, angleDistance] для каждого навыка
     const skillDistances = uniqueSkillsArray.map((_, index) => ({
       index,
       distance: calculateAngleDistance(index)
     }));
-  
+
     // Затем сортируем их по угловому расстоянию
     skillDistances.sort((a, b) => a.distance - b.distance);
-  
+
     // И наконец выбираем индексы ближайших навыков
     const numberOfSkills = selectedProfession.mainSkills.length + selectedProfession.otherSkills.length;
     const closestSkillsIndexes = skillDistances.slice(0, numberOfSkills).map(sd => sd.index);
-  
+
     // Подсветка выбранных навыков
     setSelectedSkills(new Set(closestSkillsIndexes.map(index => uniqueSkillsArray[index])));
-  
-    setSelected(name); 
+
+    setSelected(name);
     setSelectedSkill('');
 
     const professionIndex = initialData.findIndex(p => p.name === name);
@@ -230,7 +230,7 @@ const App = () => {
     const skillsToHighlight = closestSkillsIndexes.map(index => uniqueSkillsArray[index]);
     setHighlightedSkills(skillsToHighlight);
   };
-  
+
   const handleSkillClick = (skillName) => {
     setSelectedSkill(skillName);
     setSelected('');
@@ -246,6 +246,11 @@ const App = () => {
     const textY = center.y + textRadiusSkills * Math.sin(angle);
     const wordLines = getWordLines(competency);
 
+    let textAnchor = pointX > center.x ? 'start' : 'end';
+    if (pointX == center.x) {
+      textAnchor = 'middle'
+    }
+
     return {
       pointX,
       pointY,
@@ -253,17 +258,23 @@ const App = () => {
       textY,
       name: competency,
       wordLines,
-      textAnchor: 'middle'
+      textAnchor: textAnchor
     };
   });
 
   const points = initialData.map((competency, index) => {
+    const k = -5; // Смещение эллипса
     const angle = (index / initialData.length) * (2 * Math.PI) - Math.PI / 2;
     const pointX = center.x + radius * Math.cos(angle);
     const pointY = center.y + radius * Math.sin(angle);
     const textX = center.x + textRadius * Math.cos(angle);
-    const textY = center.y + textRadius * Math.sin(angle);
+    const textY = center.y + textRadius * Math.sin(angle) + k;
     const wordLines = getWordLines(competency.name);
+
+    let textAnchor = pointX > center.x ? 'start' : 'end';
+    if (pointX == center.x) {
+      textAnchor = 'middle'
+    }
 
     return {
       pointX,
@@ -272,7 +283,7 @@ const App = () => {
       textY,
       name: competency.name,
       wordLines,
-      textAnchor: 'middle'
+      textAnchor: textAnchor
     };
   });
 
@@ -294,12 +305,12 @@ const App = () => {
       <svg width="100vw" height="100vh" viewBox="0 0 900 900">
         <defs>
           <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="black" floodOpacity="0.5"/>
+            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="black" floodOpacity="0.5" />
           </filter>
         </defs>
 
-        <circle cx={center.x} cy={center.y} r={radius} stroke="grey" strokeWidth="4" fill="transparent" />
-        <circle cx={center.x} cy={center.y} r={radiusSkills} stroke="grey" strokeWidth="4" fill="transparent" />
+        <circle cx={center.x} cy={center.y} r={radius} stroke="#ADADAD" strokeWidth="2.35px" fill="transparent" />
+        <circle cx={center.x} cy={center.y} r={radiusSkills} stroke="#ADADAD" strokeWidth="2.35px" fill="transparent" />
 
         {paths}
         {points.map((point) => (
@@ -307,28 +318,28 @@ const App = () => {
             <circle
               cx={point.pointX}
               cy={point.pointY}
-              r="13"
-              fill={selected === point.name ? '#71bc78' : 'grey'}
-              stroke={selected === point.name ? 'black' : 'grey'}
+              r="13.75"
+              fill={selected === point.name ? '#00A372' : '#ADADAD'}
+              stroke={selected === point.name ? '#00A372' : '#ADADAD'}
               onClick={() => handlePointClick(point.name)}
               style={{ cursor: 'pointer', transition: 'all 0.5s ease' }}
             />
             {selected === point.name && (
-            <circle
+              <circle
                 cx={point.pointX}
                 cy={point.pointY}
-                r="20"
+                r="18"
                 fill="white"
                 stroke="none"
-                style={{transition: 'all 0.9s ease'}}
+                style={{ transition: 'all 0.9s ease' }}
               />
             )}
             <circle
               cx={point.pointX}
               cy={point.pointY}
-              r="13"
-              fill={selected === point.name ? '#71bc78' : 'grey'}
-              stroke={selected === point.name ? 'black' : 'grey'}
+              r="13.75"
+              fill={selected === point.name ? '#00A372' : '#ADADAD'}
+              stroke={selected === point.name ? '#00A372' : '#ADADAD'}
               onClick={() => handlePointClick(point.name)}
               style={{ cursor: 'pointer', transition: 'all 0.9s ease' }}
             />
@@ -337,7 +348,7 @@ const App = () => {
                 <circle
                   cx={point.pointX}
                   cy={point.pointY}
-                  r="20"
+                  r="18"
                   fill="none"
                   className="circle-highlight visible"
                 />
@@ -349,10 +360,10 @@ const App = () => {
                   height={rectSize.height + padding * 2}
                   rx="10"
                   ry="10"
-                  fill="#e9ebea"
-                  stroke="#c4c8c6"
+                  fill="rgba(255, 255, 255, 0.5)"
+                  stroke="#f4f4f4"
                   strokeWidth="1"
-                  style={{ filter: 'url(#shadow)' }}
+                  style={{ backdropFilter: 'blur(1px)' }}
                 />
               </>
             )}
@@ -378,33 +389,33 @@ const App = () => {
 
         {pointsSkills.map((point) => (
           <React.Fragment key={point.name}>
-            
+
             {selectedSkill === point.name && rectSizeSkill.width && (
               <circle
                 cx={point.pointX}
                 cy={point.pointY}
-                r="22"
+                r="18"
                 fill="none"
                 className="circle-highlight visibleSkills"
               />
             )}
-            
+
             {selectedSkill === point.name && (
-            <circle
+              <circle
                 cx={point.pointX}
                 cy={point.pointY}
-                r="22"
+                r="18"
                 fill="white"
                 stroke="none"
-                style={{transition: 'all 0.9s ease'}}
+                style={{ transition: 'all 0.9s ease' }}
               />
             )}
             <circle
               cx={point.pointX}
               cy={point.pointY}
-              r="15"
-              fill={selectedSkills.has(point.name) ? '#ffac60' : '#ffd4ac'} 
-              stroke={selectedSkills.has(point.name) ? 'black' : '#ffd4ac'}
+              r="13.75"
+              fill={selectedSkills.has(point.name) ? '#FF7A00' : '#ffd4ac'}
+              stroke={selectedSkills.has(point.name) ? '#FF7A00' : '#ffd4ac'}
               onClick={() => handleSkillClick(point.name)}
               style={{ cursor: 'pointer', zIndex: 10 }}
             />
@@ -421,7 +432,7 @@ const App = () => {
               dominantBaseline="middle"
               style={{
                 pointerEvents: 'none',
-                fill: selectedSkills.has(point.name) ? '#000' : 'lightgrey' 
+                fill: selectedSkills.has(point.name) ? '#000' : '#ADADAD'
               }}
             >
               {point.wordLines.map((line, i) => (
@@ -430,7 +441,7 @@ const App = () => {
                 </tspan>
               ))}
             </text>
-        </React.Fragment>
+          </React.Fragment>
         ))}
       </svg>
     </div>

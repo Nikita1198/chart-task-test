@@ -4,40 +4,46 @@
   align-items: center;
   width: 100%;
   height: 100%;
-  position: absolute; /* Добавляем абсолютное позиционирование */
-  top: 0; /* Привязываем элемент к верху экрана */
-  left: 0; /* Привязываем элемент к левому краю экрана */
-  overflow: hidden; /* Опционально, если хотите убрать полосу прокрутки */
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  font-size: 13.28px;
 }
 
 .text {
   user-select: none;
   font-family: Arial, sans-serif;
-  font-weight: 800;
-  font-size: 12px; 
 }
 
 .rect {
-  opacity: 0; 
-  visibility: hidden; 
-  transition: opacity 0.6s ease, visibility 0.6s ease; 
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid #f4f4f4;
+  backdrop-filter: blur(10px);
+  border-radius: 6px;
 }
 
 .rect.selected {
-  opacity: 1; 
-  visibility: visible; 
+  opacity: 1;
+  visibility: visible;
 }
 
 .circle-highlight {
-  transition: stroke 0.6s ease 0.6s , stroke-width 0.6s ease 0.6s ; 
+  transition: stroke 0.6s ease 0.6s, stroke-width 0.6s ease 0.6s;
 }
 
 .circle-highlight.visible {
-  stroke: #71bc78;
-  stroke-width: 2; 
+  stroke: #00a372;
+  stroke-width: 1;
 }
 
 .circle-highlight.visibleSkills {
-  stroke: #ffac60;
-  stroke-width: 2; 
+  stroke: #ff7a00;
+  stroke-width: 1;
 }
