@@ -1,103 +1,14 @@
 import './App.css';
 import React from 'react'
+import { initialData } from './data.js';
 
-const initialData = [
-  {
-    name: "Финансовый аналитик",
-    mainSkills: ["Excel", "SQL", "VBA", "1С"],
-    otherSkills: ["Power BI", "Python"],
-  },
-  {
-    name: "Предприниматель",
-    mainSkills: ["1C", "Excel", "Power BI"],
-    otherSkills: [
-      "Google Analytics",
-      "Яндекс.Метрика",
-      "Python",
-      "SQL",
-      "Tilda",
-    ],
-  },
-  {
-    name: "Продуктовый дизайнер",
-    mainSkills: [
-      "Figma",
-      "Sketch",
-      "Illustrator",
-      "Photoshop",
-      "Principle",
-      "Tilda",
-    ],
-    otherSkills: ["Shopify", "Protopie", "Cinema 4D"],
-  },
-  {
-    name: "Менеджер проекта",
-    mainSkills: [
-      "Visio",
-      "1C",
-      "Google Analytics",
-      "Яндекс.Метрика",
-      "Python",
-      "SQL",
-      "Tilda",
-    ],
-    otherSkills: ["Figma", "Sketch", "Shopify"],
-  },
-  {
-    name: "Финансовый менеджер",
-    mainSkills: ["1C", "Excel", "Power BI"],
-    otherSkills: ["BPMN"],
-  },
-  {
-    name: "Руководитель финансового департамента компании",
-    mainSkills: ["Sketch", "Figma"],
-    otherSkills: ["Shopify", "HQL"],
-  },
-
-  {
-    name: "Продуктовый аналитик",
-    mainSkills: [
-      "Google Analytics",
-      "Яндекс.Метрика",
-      "SQL",
-      "Power BI",
-      "Python",
-      "Excel",
-    ],
-    otherSkills: ["HQL", "Tableau", "R", "Machine learning"],
-  },
-
-  {
-    name: "Руководитель финансового продукта",
-    mainSkills: ["Visio"],
-    otherSkills: ["Python"],
-  },
-  {
-    name: "Менеджер по маркетингу",
-    mainSkills: [
-      "Google Analytics",
-      "Яндекс.Метрика",
-      "Google Ads",
-      "Ahrefs",
-      "Главред",
-      "My Target",
-    ],
-    otherSkills: ["Tilda", "Photoshop", "Xenu", "Python"],
-  },
-
-  {
-    name: "Менеджер по цифровой трансформации",
-    mainSkills: [
-      "Visio",
-      "Google Analytics",
-      "Яндекс.Метрика",
-      "Python",
-      "SQL",
-      "Tilda",
-    ],
-    otherSkills: ["Figma", "Sketch", "Shopify"],
-  },
-];
+const radius = 128;
+const radiusSkills = 330;
+const textRadius = radius + 60;
+const textRadiusSkills = radiusSkills + 40;
+const center = { x: 450, y: 450 };
+const strokeWidth = 2;
+const padding = 10;
 
 const uniqueSkillsArray = [
   ...new Set(initialData.flatMap(item => [...item.mainSkills, ...item.otherSkills]))
@@ -145,6 +56,57 @@ const createPath = (start, end, controlPointFactor = 0.5) => {
   return `M ${start.x},${startOffsetY} Q ${controlPointX},${controlPointY} ${end.x},${end.y}`;
 };
 
+const pointsSkills = uniqueSkillsArray.map((competency, index) => {
+  const angle = (index / uniqueSkillsArray.length) * (2 * Math.PI) - Math.PI / 2;
+  const pointX = center.x + radiusSkills * Math.cos(angle);
+  const pointY = center.y + radiusSkills * Math.sin(angle);
+  const textX = center.x + textRadiusSkills * Math.cos(angle);
+  const textY = center.y + textRadiusSkills * Math.sin(angle);
+  const wordLines = getWordLines(competency);
+
+  let textAnchor = pointX > center.x ? 'start' : 'end';
+  if (pointX == center.x) {
+    textAnchor = 'middle'
+  }
+
+  return {
+    index: index,
+    pointX,
+    pointY,
+    textX,
+    textY,
+    name: competency,
+    wordLines,
+    textAnchor: textAnchor
+  };
+});
+
+const points = initialData.map((competency, index) => {
+  const k = -5; // Смещение эллипса
+  const angle = (index / initialData.length) * (2 * Math.PI) - Math.PI / 2;
+  const pointX = center.x + radius * Math.cos(angle);
+  const pointY = center.y + radius * Math.sin(angle);
+  const textX = center.x + textRadius * Math.cos(angle);
+  const textY = center.y + textRadius * Math.sin(angle) + k;
+  const wordLines = getWordLines(competency.name);
+
+  let textAnchor = pointX > center.x ? 'start' : 'end';
+  if (pointX == center.x) {
+    textAnchor = 'middle'
+  }
+
+  return {
+    index: index,
+    pointX,
+    pointY,
+    textX,
+    textY,
+    name: competency.name,
+    wordLines,
+    textAnchor: textAnchor
+  };
+});
+
 const App = () => {
   const [selected, setSelected] = React.useState('');
   const [rectSize, setRectSize] = React.useState({});
@@ -153,7 +115,6 @@ const App = () => {
   const [selectedSkills, setSelectedSkills] = React.useState(new Set());
   const [selectedProfessionCenter, setSelectedProfessionCenter] = React.useState(null);
   const [highlightedSkills, setHighlightedSkills] = React.useState([]);
-
   const textRefs = React.useRef({});
 
   React.useEffect(() => {
@@ -179,46 +140,29 @@ const App = () => {
     }
   }, [selected, selectedSkill]);
 
-  const radius = 128;
-  const radiusSkills = 330;
-  const textRadius = radius + 60;
-  const textRadiusSkills = radiusSkills + 40;
-  const center = { x: 450, y: 450 };
-  const strokeWidth = 2;
-  const padding = 10;
-
   const handlePointClick = (name) => {
-    // Определение выбранной профессии
     const selectedProfessionIndex = initialData.findIndex(p => p.name === name);
     const selectedProfession = initialData[selectedProfessionIndex];
 
-    // Вычисление угла для выбранной профессии
     const selectedProfessionAngle = (selectedProfessionIndex / initialData.length) * (2 * Math.PI);
 
-    // Функция для вычисления углового расстояния до выбранной профессии
     const calculateAngleDistance = (skillIndex) => {
       const skillAngle = (skillIndex / uniqueSkillsArray.length) * (2 * Math.PI);
       let angleDistance = Math.abs(skillAngle - selectedProfessionAngle);
-      // Угловое расстояние не может быть больше π
       angleDistance = angleDistance > Math.PI ? (2 * Math.PI) - angleDistance : angleDistance;
       return angleDistance;
     };
 
-    // Выбор ближайших навыков по угловому расстоянию
-    // Сначала создаем пары [index, angleDistance] для каждого навыка
     const skillDistances = uniqueSkillsArray.map((_, index) => ({
       index,
       distance: calculateAngleDistance(index)
     }));
 
-    // Затем сортируем их по угловому расстоянию
     skillDistances.sort((a, b) => a.distance - b.distance);
 
-    // И наконец выбираем индексы ближайших навыков
     const numberOfSkills = selectedProfession.mainSkills.length + selectedProfession.otherSkills.length;
     const closestSkillsIndexes = skillDistances.slice(0, numberOfSkills).map(sd => sd.index);
 
-    // Подсветка выбранных навыков
     setSelectedSkills(new Set(closestSkillsIndexes.map(index => uniqueSkillsArray[index])));
 
     setSelected(name);
@@ -237,55 +181,6 @@ const App = () => {
     setHighlightedSkills([])
     setSelectedSkills(new Set([skillName]))
   };
-
-  const pointsSkills = uniqueSkillsArray.map((competency, index) => {
-    const angle = (index / uniqueSkillsArray.length) * (2 * Math.PI) - Math.PI / 2;
-    const pointX = center.x + radiusSkills * Math.cos(angle);
-    const pointY = center.y + radiusSkills * Math.sin(angle);
-    const textX = center.x + textRadiusSkills * Math.cos(angle);
-    const textY = center.y + textRadiusSkills * Math.sin(angle);
-    const wordLines = getWordLines(competency);
-
-    let textAnchor = pointX > center.x ? 'start' : 'end';
-    if (pointX == center.x) {
-      textAnchor = 'middle'
-    }
-
-    return {
-      pointX,
-      pointY,
-      textX,
-      textY,
-      name: competency,
-      wordLines,
-      textAnchor: textAnchor
-    };
-  });
-
-  const points = initialData.map((competency, index) => {
-    const k = -5; // Смещение эллипса
-    const angle = (index / initialData.length) * (2 * Math.PI) - Math.PI / 2;
-    const pointX = center.x + radius * Math.cos(angle);
-    const pointY = center.y + radius * Math.sin(angle);
-    const textX = center.x + textRadius * Math.cos(angle);
-    const textY = center.y + textRadius * Math.sin(angle) + k;
-    const wordLines = getWordLines(competency.name);
-
-    let textAnchor = pointX > center.x ? 'start' : 'end';
-    if (pointX == center.x) {
-      textAnchor = 'middle'
-    }
-
-    return {
-      pointX,
-      pointY,
-      textX,
-      textY,
-      name: competency.name,
-      wordLines,
-      textAnchor: textAnchor
-    };
-  });
 
   const paths = highlightedSkills.map((skillName, i) => {
     const skillPoint = pointsSkills.find(p => p.name === skillName);
@@ -313,8 +208,9 @@ const App = () => {
         <circle cx={center.x} cy={center.y} r={radiusSkills} stroke="#ADADAD" strokeWidth="2.35px" fill="transparent" />
 
         {paths}
+
         {points.map((point) => (
-          <React.Fragment key={point.name}>
+          <React.Fragment key={point.index}>
             <circle
               cx={point.pointX}
               cy={point.pointY}
@@ -443,6 +339,7 @@ const App = () => {
             </text>
           </React.Fragment>
         ))}
+
       </svg>
     </div>
   );
