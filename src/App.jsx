@@ -56,66 +56,75 @@ const createPath = (start, end, controlPointFactor = 0.5) => {
   return `M ${start.x},${startOffsetY} Q ${controlPointX},${controlPointY} ${end.x},${end.y}`;
 };
 
-const pointsSkills = uniqueSkillsArray.map((competency, index) => {
-  const angle = (index / uniqueSkillsArray.length) * (2 * Math.PI) - Math.PI / 2;
-  const pointX = center.x + radiusSkills * Math.cos(angle);
-  const pointY = center.y + radiusSkills * Math.sin(angle);
-  const textX = center.x + textRadiusSkills * Math.cos(angle);
-  const textY = center.y + textRadiusSkills * Math.sin(angle);
-  const wordLines = getWordLines(competency);
-
-  let textAnchor = pointX > center.x ? 'start' : 'end';
-  if (pointX == center.x) {
-    textAnchor = 'middle'
-  }
-
-  return {
-    index: index,
-    pointX,
-    pointY,
-    textX,
-    textY,
-    name: competency,
-    wordLines,
-    textAnchor: textAnchor
-  };
-});
-
-const points = initialData.map((competency, index) => {
-  const k = -5; // Смещение эллипса
-  const angle = (index / initialData.length) * (2 * Math.PI) - Math.PI / 2;
-  const pointX = center.x + radius * Math.cos(angle);
-  const pointY = center.y + radius * Math.sin(angle);
-  const textX = center.x + textRadius * Math.cos(angle);
-  const textY = center.y + textRadius * Math.sin(angle) + k;
-  const wordLines = getWordLines(competency.name);
-
-  let textAnchor = pointX > center.x ? 'start' : 'end';
-  if (pointX == center.x) {
-    textAnchor = 'middle'
-  }
-
-  return {
-    index: index,
-    pointX,
-    pointY,
-    textX,
-    textY,
-    name: competency.name,
-    wordLines,
-    textAnchor: textAnchor
-  };
-});
-
 const App = () => {
   const [selected, setSelected] = React.useState('');
   const [rectSize, setRectSize] = React.useState({});
   const [rectSizeSkill, setRectSizeSkill] = React.useState({});
+  
   const [selectedSkill, setSelectedSkill] = React.useState('');
   const [selectedSkills, setSelectedSkills] = React.useState(new Set());
   const [selectedProfessionCenter, setSelectedProfessionCenter] = React.useState(null);
   const [highlightedSkills, setHighlightedSkills] = React.useState([]);
   const textRefs = React.useRef({});
+
+  const [points, setPoints] = React.useState([]) 
+  const [pointsSkills, setPointsSkills] = React.useState([]) 
+  
+  React.useEffect(() => {
+    const initialPoints = initialData.map((competency, index) => {
+      const k = -5; // Смещение эллипса
+      const angle = (index / initialData.length) * (2 * Math.PI) - Math.PI / 2;
+      const pointX = center.x + radius * Math.cos(angle);
+      const pointY = center.y + radius * Math.sin(angle);
+      const textX = center.x + textRadius * Math.cos(angle);
+      const textY = center.y + textRadius * Math.sin(angle) + k;
+      const wordLines = getWordLines(competency.name);
+    
+      let textAnchor = pointX > center.x ? 'start' : 'end';
+      if (pointX == center.x) {
+        textAnchor = 'middle'
+      }
+    
+      return {
+        index: index,
+        pointX,
+        pointY,
+        textX,
+        textY,
+        name: competency.name,
+        wordLines,
+        textAnchor: textAnchor
+      };
+    });
+
+    const initialPointsSkills = uniqueSkillsArray.map((competency, index) => {
+      const angle = (index / uniqueSkillsArray.length) * (2 * Math.PI) - Math.PI / 2;
+      const pointX = center.x + radiusSkills * Math.cos(angle);
+      const pointY = center.y + radiusSkills * Math.sin(angle);
+      const textX = center.x + textRadiusSkills * Math.cos(angle);
+      const textY = center.y + textRadiusSkills * Math.sin(angle);
+      const wordLines = getWordLines(competency);
+    
+      let textAnchor = pointX > center.x ? 'start' : 'end';
+      if (pointX == center.x) {
+        textAnchor = 'middle'
+      }
+    
+      return {
+        index: index,
+        pointX,
+        pointY,
+        textX,
+        textY,
+        name: competency,
+        wordLines,
+        textAnchor: textAnchor
+      };
+    })
+    
+    setPointsSkills(initialPointsSkills)
+    setPoints(initialPoints)
+  }, [])
 
   React.useEffect(() => {
     let currentSelection = selected || selectedSkill;
@@ -143,6 +152,10 @@ const App = () => {
   const handlePointClick = (name) => {
     const selectedProfessionIndex = initialData.findIndex(p => p.name === name);
     const selectedProfession = initialData[selectedProfessionIndex];
+    const selectedProfessionSkills = [
+        ...selectedProfession.mainSkills,
+        ...selectedProfession.otherSkills,
+    ];
 
     const selectedProfessionAngle = (selectedProfessionIndex / initialData.length) * (2 * Math.PI);
 
@@ -164,6 +177,55 @@ const App = () => {
     const closestSkillsIndexes = skillDistances.slice(0, numberOfSkills).map(sd => sd.index);
 
     setSelectedSkills(new Set(closestSkillsIndexes.map(index => uniqueSkillsArray[index])));
+
+    const professionSkillsSelected = pointsSkills.filter(skill => 
+      selectedProfessionSkills.includes(skill.name)
+    );
+    const professionSkillsClosest = pointsSkills.filter(skill => 
+      closestSkillsIndexes.includes(skill.index)
+    );
+
+    const updatesMap = new Map();
+
+    // Заполняем карту данными из professionSkillsSelected
+    professionSkillsSelected.forEach((selectedSkill) => {
+      updatesMap.set(selectedSkill.index, {
+        name: selectedSkill.name,
+        wordLines: selectedSkill.wordLines,
+        textAnchor: selectedSkill.textAnchor
+      });
+    });
+
+    // 2. Обновление pointsSkills с новыми данными из professionSkillsClosest
+    const updatedPointsSkills = pointsSkills.map((skill) => {
+      if (closestSkillsIndexes.includes(skill.index)) {
+        // Для ближайших навыков обновляем данные из карты
+        const update = updatesMap.get(skill.index);
+        if (update) {
+          return {
+            ...skill,
+            name: update.name,
+            wordLines: update.wordLines,
+            textAnchor: update.textAnchor
+          };
+        }
+      } else if (selectedProfessionSkills.includes(skill.name)) {
+        // Для выбранных навыков находим соответствующий ближайший навык и обмениваемся данными
+        const closestSkill = professionSkillsClosest.find(closestSkill => closestSkill.index === skill.index);
+        if (closestSkill) {
+          return {
+            ...skill,
+            name: closestSkill.name,
+            wordLines: closestSkill.wordLines,
+            textAnchor: closestSkill.textAnchor
+          };
+        }
+      }
+      // Для остальных навыков возвращаем без изменений
+      return skill;
+    });
+
+    setPointsSkills(updatedPointsSkills);
 
     setSelected(name);
     setSelectedSkill('');
@@ -210,7 +272,7 @@ const App = () => {
         {paths}
 
         {points.map((point) => (
-          <React.Fragment key={point.index}>
+          <React.Fragment key={point.name}>
             <circle
               cx={point.pointX}
               cy={point.pointY}
